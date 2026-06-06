@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.so
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Data — large tensors and log files
+data/
+
+# Results — generated outputs
+results/
+
+# PyTorch checkpoints / model weights
+*.pt
+*.pth
+*.ckpt
+*.bin
+*.safetensors
+
+# Logs
+*.log
+*.txt
+logs/
+
+# Claude Code local settings
+.claude/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
