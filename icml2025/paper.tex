@@ -1,28 +1,23 @@
-\documentclass[11pt]{article}
+\documentclass{article}
 
-\usepackage[margin=1in]{geometry}
-\usepackage{amsmath,amssymb,amsthm}
-\usepackage{booktabs}
-\usepackage{graphicx}
-\usepackage{hyperref}
-\usepackage{xcolor}
 \usepackage{microtype}
-\usepackage{natbib}
-\usepackage{algorithm}
-\usepackage{algpseudocode}
-\usepackage{caption}
-\usepackage{subcaption}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\newcommand{\theHalgorithm}{\arabic{algorithm}}
+
+\usepackage{icml2025}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{mathtools}
 \usepackage{multirow}
 \usepackage{array}
-\usepackage{listings}
 \usepackage{enumitem}
+\usepackage{subcaption}
 
-\hypersetup{
-    colorlinks=true,
-    linkcolor=blue!70!black,
-    citecolor=blue!70!black,
-    urlcolor=blue!70!black,
-}
+\icmltitlerunning{Compositional Feature Interpretability for Diffusion Language Models}
 
 \newcommand{\LR}{\mathrm{LR}}
 \newcommand{\bfx}{\mathbf{x}}
@@ -33,29 +28,32 @@
 \newcommand{\bfgamma}{\boldsymbol{\gamma}}
 \newcommand{\softplus}{\mathrm{softplus}}
 
-\title{%
-    \textbf{Compositional Feature Interpretability for Diffusion Language Models}%
-}
-
-\author{
-    Shijian Xu \\
-    University of Basel \\
-    \texttt{shijian.xxu@gmail.com}
-}
-
-\date{}
-
 \begin{document}
 
-\maketitle
+\twocolumn[
+\icmltitle{Compositional Feature Interpretability for Diffusion Language Models}
+
+\begin{icmlauthorlist}
+\icmlauthor{Shijian Xu}{unibas}
+\end{icmlauthorlist}
+
+\icmlaffiliation{unibas}{Department of Mathematics and Computer Science, University of Basel, Basel, Switzerland}
+\icmlcorrespondingauthor{Shijian Xu}{shijian.xxu@gmail.com}
+
+\icmlkeywords{mechanistic interpretability, sparse autoencoders, diffusion language models, feature compositionality, nonlinear interactions}
+
+\vskip 0.3in
+]
+
+\printAffiliationsAndNotice{}
 
 \begin{abstract}
 Diffusion language models (dLLMs) denoise text through bidirectional masked attention, raising an open question: how do SAE-discovered features compose with each other as denoising progresses?
-We apply NIMO---a nonlinear interaction model with a closed-form linear decomposition---to sparse autoencoder (SAE) features extracted from LLaDA-8B-Base across six transformer layers and five denoising timesteps.
+We apply NIMO---a nonlinear interaction model with a closed-form linear decomposition---to sparse autoencoder (SAE) features extracted from LLaDA-8B-Base~\citep{llada2025} across six transformer layers and five denoising timesteps.
 To handle the high-dimensional, ultra-sparse feature space ($d_\mathrm{SAE} = 16{,}384$, top-$K = 50$), we develop \emph{SparseSAENIMO}, a compressed context-encoding adaptation of NIMO that scales to SAE dimensions without the $O(d^2)$ memory cost of the original formulation.
 The Linearity Ratio ($\LR$)---the fraction of model output attributable to linear feature effects---decreases monotonically as the timestep decreases (more context becomes available) and as layer depth increases.
 At the deepest measured layer (30) and smallest timestep ($t = 0.10$), $\LR = 0.094$, indicating that $90.6\%$ of the model's log-probability signal at that point is mediated by nonlinear cross-feature interactions.
-In contrast, a causal autoregressive baseline (GPT-2 Small with Joseph Bloom SAEs) shows $\LR \ge 0.30$ across all layers and prefix lengths, confirming that bidirectional attention generates qualitatively stronger feature interactions than unidirectional attention.
+In contrast, a causal autoregressive baseline (GPT-2 Small~\citep{radford2019language} with Joseph Bloom SAEs~\citep{bloom2024sae}) shows $\LR \ge 0.30$ across all layers and prefix lengths, confirming that bidirectional attention generates qualitatively stronger feature interactions than unidirectional attention.
 These results constitute the first quantitative characterisation of compositional feature dynamics in a large-scale diffusion language model.
 \end{abstract}
 
@@ -66,7 +64,7 @@ These results constitute the first quantitative characterisation of compositiona
 Sparse autoencoders (SAEs) have emerged as a powerful tool for mechanistic interpretability, decomposing dense neural representations into sparse, approximately monosemantic features~\citep{cunningham2023sparse,templeton2024scaling}.
 However, identifying individual features is only the first step: understanding how features \emph{compose}---how they interact to produce model outputs---is equally important and less studied.
 
-Diffusion language models (dLLMs) present a particularly interesting setting for this question.
+Diffusion language models (dLLMs)~\citep{llada2025,sahoo2024simple,lou2024discrete} present a particularly interesting setting for this question.
 Unlike autoregressive models, which compute representations through unidirectional attention, dLLMs operate via bidirectional masked attention across all tokens simultaneously at each denoising step.
 This architecture creates a rich environment for cross-feature interactions: each feature is computed in the context of all other token features in the sequence.
 Moreover, the denoising process introduces a controllable variable---the noise level $t$---that varies from fully masked ($t = 1.0$, no context) to nearly clean ($t \to 0$, full context).
@@ -105,10 +103,10 @@ We make the following contributions:
 
 \subsection{Diffusion Language Models}
 
-LLaDA-8B-Base~\citep{llada2024} is an 8B-parameter masked diffusion language model based on a bidirectional transformer (32~layers, $d_\mathrm{model} = 4{,}096$).
+LLaDA-8B-Base~\citep{llada2025} is an 8B-parameter masked diffusion language model based on a bidirectional transformer (32~layers, $d_\mathrm{model} = 4{,}096$).
 Given a clean token sequence, LLaDA corrupts it by independently masking each token with probability $t$, then trains a bidirectional transformer to predict the original tokens from the masked sequence.
 At generation time, LLaDA iteratively unmasks tokens over $T$ denoising steps.
-At noise level $t$, the model conditions on all visible tokens simultaneously, creating dense bidirectional attention patterns that differ fundamentally from autoregressive models.
+At noise level $t$, the model conditions on all visible tokens simultaneously, creating dense bidirectional attention patterns that differ fundamentally from autoregressive models~\citep{sahoo2024simple,austin2021structured}.
 
 \subsection{Sparse Autoencoders for LLMs}
 
@@ -117,7 +115,7 @@ Each SAE encodes a residual stream activation $\bfh \in \mathbb{R}^{4096}$ as
 \begin{equation}
     \mathbf{f} = \mathrm{TopK}(\mathbf{W}_{\mathrm{enc}}\,\bfh + \mathbf{b}_{\mathrm{enc}},\;K=50) \;\in\; \mathbb{R}^{16384},
 \end{equation}
-retaining only the $K = 50$ largest activations. The resulting feature vectors are ultra-sparse: only 50 out of 16,384 dimensions are nonzero per sample (sparsity ratio 99.7\%).
+retaining only the $K = 50$ largest activations~\citep{gao2024scaling}. The resulting feature vectors are ultra-sparse: only 50 out of 16,384 dimensions are nonzero per sample (sparsity ratio 99.7\%).
 
 \subsection{NIMO}
 
@@ -191,7 +189,7 @@ Adam optimiser ($\mathrm{lr} = 3\times10^{-4}$, cosine annealing over 60 epochs)
 
 \subsection{Dataset}
 
-We sample 30,000 sequences from the Pile validation split (512 tokens each) and run LLaDA-8B-Base forward at noise levels $t \in \{0.10, 0.25, 0.50, 0.75, 1.00\}$.
+We sample 30,000 sequences from the Pile~\citep{gao2020pile} validation split (512 tokens each) and run LLaDA-8B-Base forward at noise levels $t \in \{0.10, 0.25, 0.50, 0.75, 1.00\}$.
 At each $t$, we randomly mask each token independently with probability $t$, then record:
 \begin{itemize}
     \item \textbf{SAE features}: residual stream activations at layers $\{1, 6, 11, 16, 26, 30\}$, encoded through DLM-Scope TopK SAEs $\to$ shape $[N, d_\mathrm{SAE}]$ with at most 50 nonzeros per row.
@@ -201,7 +199,7 @@ This yields 30 feature files (6 layers $\times$ 5 timesteps), each with $N = 30{
 
 \subsection{AR Baseline}
 
-For comparison, we extract features from GPT-2 Small (12 layers, $d_\mathrm{model} = 768$) using Joseph Bloom's SAEs~\citep{bloom2024sae} ($d_\mathrm{SAE} = 24{,}576$) at layers $\{0, 2, 4, 6, 8, 10\}$.
+For comparison, we extract features from GPT-2 Small~\citep{radford2019language} (12 layers, $d_\mathrm{model} = 768$) using Joseph Bloom's SAEs~\citep{bloom2024sae} ($d_\mathrm{SAE} = 24{,}576$) at layers $\{0, 2, 4, 6, 8, 10\}$.
 We vary the prefix fraction $p \in \{0.10, 0.25, 0.50, 0.75, 1.00\}$ (the fraction of tokens visible), giving 19,998 samples per (layer, prefix) pair.
 The AR prefix fraction $p$ is the natural analogue of the dLLM noise level $t$: both control how much context is available.
 
@@ -219,32 +217,37 @@ The AR prefix fraction $p$ is the natural analogue of the dLLM noise level $t$: 
 \section{Results}
 %% ─────────────────────────────────────────────────────────────────
 
-\subsection{RQ2: Phase Transition in LR($t$)}
+\subsection{Phase Transition in LR($t$)}
 
-\begin{table}[h]
+\begin{table}[t]
 \centering
 \caption{Linearity Ratio $\LR(t)$ for LLaDA-8B-Base. Rows marked $*$ are degenerate ($t = 1.0$, only 50 mask-token features active) and are excluded from trend analysis.}
 \label{tab:lr_dlm}
-\begin{tabular}{rr cccc c}
+\vskip 0.1in
+\begin{small}
+\begin{sc}
+\begin{tabular}{r cccc c}
 \toprule
-\textbf{Layer} & \textbf{Depth} & $t=0.10$ & $t=0.25$ & $t=0.50$ & $t=0.75$ & $\Delta(0.10 \to 0.75)$ \\
+\textbf{Layer} & $t{=}0.10$ & $t{=}0.25$ & $t{=}0.50$ & $t{=}0.75$ & $\Delta$ \\
 \midrule
-1  & 3.1\%  & 0.790 & 0.814 & 0.855 & 0.878 & $+0.088$ \\
-6  & 18.8\% & 0.624 & 0.659 & 0.719 & 0.775 & $+0.151$ \\
-11 & 34.4\% & 0.527 & 0.559 & 0.623 & 0.680 & $+0.153$ \\
-16 & 50.0\% & 0.434 & 0.462 & 0.531 & 0.584 & $+0.150$ \\
-26 & 81.3\% & 0.199 & 0.224 & 0.259 & 0.303 & $+0.104$ \\
-30 & 93.8\% & 0.094 & 0.108 & 0.124 & 0.135 & $+0.041$ \\
+1  & 0.790 & 0.814 & 0.855 & 0.878 & $+0.088$ \\
+6  & 0.624 & 0.659 & 0.719 & 0.775 & $+0.151$ \\
+11 & 0.527 & 0.559 & 0.623 & 0.680 & $+0.153$ \\
+16 & 0.434 & 0.462 & 0.531 & 0.584 & $+0.150$ \\
+26 & 0.199 & 0.224 & 0.259 & 0.303 & $+0.104$ \\
+30 & 0.094 & 0.108 & 0.124 & 0.135 & $+0.041$ \\
 \bottomrule
 \end{tabular}
+\end{sc}
+\end{small}
 \end{table}
 
 Table~\ref{tab:lr_dlm} shows that LR increases monotonically as $t$ increases for all six layers ($t = 0.10 \to 0.75$).
 This is consistent with the phase transition hypothesis: as more tokens are masked (larger $t$), the model has less bidirectional context, reducing cross-feature interactions and making the log-probability signal more linearly predictable from individual features.
 
-LR also decreases with layer depth at any fixed $t$. At $t = 0.10$, LR drops from 0.790 (layer~1) to 0.094 (layer~30)---a ratio of $8.4\times$. This suggests that deeper layers operate in a substantially more nonlinear compositional regime, consistent with the view that early layers perform local feature detection while later layers perform nonlinear feature combination.
+LR also decreases with layer depth at any fixed $t$. At $t = 0.10$, LR drops from 0.790 (layer~1) to 0.094 (layer~30)---a ratio of $8.4\times$. This suggests that deeper layers operate in a substantially more nonlinear compositional regime, consistent with the view that early layers perform local feature detection while later layers perform nonlinear feature combination~\citep{elhage2021mathematical}.
 
-\subsection{RQ1: Feature Beta Stability Across Timesteps}
+\subsection{Feature Beta Stability Across Timesteps}
 
 We categorise each feature by its $|\beta(t)|$ trajectory across timesteps within a layer:
 \begin{itemize}
@@ -253,13 +256,16 @@ We categorise each feature by its $|\beta(t)|$ trajectory across timesteps withi
     \item \textbf{Late-dominant}: stronger at large $t$ (less context $\to$ more active).
 \end{itemize}
 
-\begin{table}[h]
+\begin{table}[t]
 \centering
 \caption{Feature category counts per layer ($V = 2{,}048$ vocabulary; threshold $|\beta| > 10^{-3}$).}
 \label{tab:beta_stability}
+\vskip 0.1in
+\begin{small}
+\begin{sc}
 \begin{tabular}{r rrrr}
 \toprule
-\textbf{Layer} & \textbf{Always-on} & \textbf{Early-dominant} & \textbf{Late-dominant} & \textbf{Total active} \\
+\textbf{Layer} & \textbf{AO} & \textbf{ED} & \textbf{LD} & \textbf{Total} \\
 \midrule
 1  & 483 & 1,038 & 1,203 & 2,724 \\
 6  & 487 &   840 & 1,116 & 2,443 \\
@@ -269,19 +275,23 @@ We categorise each feature by its $|\beta(t)|$ trajectory across timesteps withi
 30 & 388 &   563 &   671 & 1,622 \\
 \bottomrule
 \end{tabular}
+\end{sc}
+\end{small}
+\vskip -0.05in
+{\small AO: always-on; ED: early-dominant; LD: late-dominant.}
 \end{table}
 
 The majority of active features change their importance across timesteps (Table~\ref{tab:beta_stability}): only 19--22\% are always-on in layers 1--26 (24\% in layer~30).
 Late-dominant features (those more influential when context is sparse) slightly outnumber early-dominant features at most layers, suggesting that many features serve as fallback predictors when context is unavailable.
 Layer~30 has notably fewer active features (1,622 vs.\ $\sim$2,500 in other layers), consistent with a more compressed vocabulary at the deepest layer.
 
-\subsection{RQ3: Feature Rankings and Causal Relevance}
+\subsection{Feature Rankings and Causal Relevance}
 
 For each (layer, timestep) pair we compute three feature ranking criteria: (a)~$|\beta_j|$ (NIMO global importance), (b)~activation frequency (proportion of samples where feature $j$ is active), and (c)~absolute Pearson correlation with the log-probability target.
 
-The top-10 $|\beta|$ features shift substantially across timesteps within a layer. In layer~26, the leading feature at $t = 0.10$ (SAE index~6185, $|\beta| = 0.053$) is replaced by a different feature (index~861, $|\beta| = 0.071$) at $t = 0.75$, indicating that the most linearly predictive feature changes as context availability varies. Full rankings are saved in \texttt{results/causal\_ranking.pt} for downstream activation-patching experiments.
+The top-10 $|\beta|$ features shift substantially across timesteps within a layer. In layer~26, the leading feature at $t = 0.10$ (SAE index~6185, $|\beta| = 0.053$) is replaced by a different feature (index~861, $|\beta| = 0.071$) at $t = 0.75$, indicating that the most linearly predictive feature changes as context availability varies. Full rankings are saved in \texttt{results/causal\_ranking.pt} for downstream activation-patching experiments~\citep{meng2022locating}.
 
-\subsection{RQ4: Feature Interaction Sparsity}
+\subsection{Feature Interaction Sparsity}
 
 For each layer we fit a sparse linear interaction model on the $G$ corrections:
 \begin{equation}
@@ -289,26 +299,31 @@ For each layer we fit a sparse linear interaction model on the $G$ corrections:
 \end{equation}
 keeping the top-200 edges by $|\alpha_{j'j}|$.
 In all six layers, 200 significant interactions correspond to $\le 0.005\%$ of all $V^2 = 2{,}048^2 = 4{,}194{,}304$ possible feature pairs.
-This extreme sparsity is consistent with the mechanistic interpretability literature suggesting that SAE features interact through small circuits rather than all-to-all dependencies.
+This extreme sparsity is consistent with the mechanistic interpretability literature suggesting that SAE features interact through small circuits rather than all-to-all dependencies~\citep{elhage2021mathematical,conmy2023towards}.
 
-\subsection{RQ5: dLLM vs.\ AR-LLM Compositionality}
+\subsection{dLLM vs.\ AR-LLM Compositionality}
 
-\begin{table}[h]
+\begin{table}[t]
 \centering
-\caption{Linearity Ratio $\LR$ for GPT-2 Small (AR) across prefix fractions. ``Flat?'' indicates whether the standard deviation across prefix fractions is $< 0.05$.}
+\caption{Linearity Ratio $\LR$ for GPT-2 Small (AR) across prefix fractions. ``Flat?'' indicates std across prefix fractions $< 0.05$.}
 \label{tab:lr_ar}
-\begin{tabular}{rr ccccc rr}
+\vskip 0.1in
+\begin{small}
+\begin{sc}
+\begin{tabular}{r ccccc r}
 \toprule
-\textbf{Layer} & \textbf{Depth} & $t=0.10$ & $t=0.25$ & $t=0.50$ & $t=0.75$ & $t=1.00$ & \textbf{Std} & \textbf{Flat?} \\
+\textbf{L} & $p{=}0.10$ & $p{=}0.25$ & $p{=}0.50$ & $p{=}0.75$ & $p{=}1.00$ & \textbf{Flat?} \\
 \midrule
-0  & 0\%   & 0.975 & 0.975 & 0.973 & 0.971 & 0.970 & 0.002 & Yes \\
-2  & 17\%  & 0.610 & 0.591 & 0.588 & 0.598 & 0.561 & 0.017 & Yes \\
-4  & 33\%  & 0.564 & 0.523 & 0.522 & 0.532 & 0.538 & 0.016 & Yes \\
-6  & 50\%  & 0.538 & 0.484 & 0.468 & 0.480 & 0.499 & 0.025 & Yes \\
-8  & 67\%  & 0.505 & 0.439 & 0.363 & 0.377 & 0.389 & 0.052 & No  \\
-10 & 83\%  & 0.457 & 0.371 & 0.301 & 0.303 & 0.302 & 0.061 & No  \\
+0  & 0.975 & 0.975 & 0.973 & 0.971 & 0.970 & Yes \\
+2  & 0.610 & 0.591 & 0.588 & 0.598 & 0.561 & Yes \\
+4  & 0.564 & 0.523 & 0.522 & 0.532 & 0.538 & Yes \\
+6  & 0.538 & 0.484 & 0.468 & 0.480 & 0.499 & Yes \\
+8  & 0.505 & 0.439 & 0.363 & 0.377 & 0.389 & No  \\
+10 & 0.457 & 0.371 & 0.301 & 0.303 & 0.302 & No  \\
 \bottomrule
 \end{tabular}
+\end{sc}
+\end{small}
 \end{table}
 
 AR layers 0--6 show flat LR across prefix fractions ($\mathrm{std} < 0.05$; Table~\ref{tab:lr_ar}), confirming that causal attention creates stable, context-independent feature effects.
@@ -318,13 +333,16 @@ Critically, the minimum AR LR is 0.301 (layer~10, $t = 0.50$), while the minimum
 
 \subsection{NIMO vs.\ Linear Baseline}
 
-\begin{table}[h]
+\begin{table}[t]
 \centering
 \caption{NIMO validation $R^2$ vs.\ linear probe $R^2$ on log-probability prediction (selected layers/timesteps, excluding $t = 1.0$ degenerate).}
 \label{tab:r2}
+\vskip 0.1in
+\begin{small}
+\begin{sc}
 \begin{tabular}{rr cc r}
 \toprule
-\textbf{Layer} & $t$ & \textbf{Linear $R^2$} & \textbf{NIMO $R^2$} & \textbf{Improvement} \\
+\textbf{L} & $t$ & \textbf{Lin.} & \textbf{NIMO} & \textbf{Impr.} \\
 \midrule
 1  & 0.10 & 0.0467 & 0.0488 & $+4.5\%$ \\
 1  & 0.75 & 0.1431 & 0.1480 & $+3.4\%$ \\
@@ -336,6 +354,8 @@ Critically, the minimum AR LR is 0.301 (layer~10, $t = 0.50$), while the minimum
 30 & 0.75 & 0.2590 & 0.2661 & $+2.7\%$ \\
 \bottomrule
 \end{tabular}
+\end{sc}
+\end{small}
 \end{table}
 
 NIMO consistently outperforms the linear probe (Table~\ref{tab:r2}), confirming that the nonlinear correction $g_u$ captures genuine signal beyond linear feature effects.
@@ -359,10 +379,10 @@ Layers 8 and 10 of GPT-2 Small show mild prefix-fraction dependence ($\mathrm{st
 
 \paragraph{Limitations.}
 \begin{itemize}
-    \item \textbf{Single dLLM architecture.} Results are specific to LLaDA-8B-Base with DLM-Scope SAEs. Whether other dLLM architectures (e.g., MDLM, Plaid) show the same phase transition remains an open question.
+    \item \textbf{Single dLLM architecture.} Results are specific to LLaDA-8B-Base with DLM-Scope SAEs. Whether other dLLM architectures (e.g., MDLM~\citep{sahoo2024simple}, Plaid~\citep{gulrajani2024likelihood}) show the same phase transition remains an open question.
     \item \textbf{Log-probability as target.} We predict token-level log-probability as a proxy for semantic information content. Other targets (e.g., next-timestep feature activation, generation quality metrics) may reveal different LR profiles.
     \item \textbf{Compressed context.} The binary positional encoding summarises feature co-activation patterns but cannot represent actual context feature values. A richer encoding (e.g., learned feature embeddings) may capture stronger interactions.
-    \item \textbf{Causal steering not yet executed.} The feature rankings in \texttt{results/causal\_ranking.pt} enable activation patching experiments (comparing $|\beta|$-ranked vs.\ frequency-ranked vs.\ correlation-ranked features), but these experiments are not yet implemented.
+    \item \textbf{Causal steering not yet executed.} The feature rankings in \texttt{results/causal\_ranking.pt} enable activation patching experiments, but these experiments are not yet implemented.
 \end{itemize}
 
 %% ─────────────────────────────────────────────────────────────────
@@ -373,10 +393,10 @@ We have applied NIMO to SAE features from LLaDA-8B-Base to characterise how feat
 The central finding is a robust phase transition: the Linearity Ratio decreases as the noise level decreases and as layer depth increases, reaching $\LR = 0.094$ at layer~30 / $t = 0.10$.
 An autoregressive baseline (GPT-2 Small) shows $\LR \ge 0.30$ under comparable conditions, confirming that bidirectional masked attention generates qualitatively stronger nonlinear feature interactions.
 
-These results suggest that mechanistic interpretability methods developed for autoregressive models---which largely assume approximately additive feature effects---may underestimate interaction complexity when applied to diffusion language models. Methods that explicitly account for nonlinear feature interactions, such as NIMO, are better suited to characterising the computational structure of dLLMs.
+These results suggest that mechanistic interpretability methods developed for autoregressive models---which largely assume approximately additive feature effects~\citep{elhage2022toy}---may underestimate interaction complexity when applied to diffusion language models. Methods that explicitly account for nonlinear feature interactions, such as NIMO, are better suited to characterising the computational structure of dLLMs.
 
 %% ─────────────────────────────────────────────────────────────────
-\bibliographystyle{plainnat}
+\bibliographystyle{icml2025}
 \bibliography{paper}
 
 %% ─────────────────────────────────────────────────────────────────
@@ -404,37 +424,48 @@ PyTorch~2.x; \texttt{AwesomeInterpretability/llada-mask-topk-sae} for DLM-Scope 
 \centering
 \caption{Full LR table for LLaDA-8B-Base, including degenerate $t=1.0$ rows.}
 \label{tab:full_lr_dlm}
-\begin{tabular}{rr ccccc r}
+\vskip 0.1in
+\begin{small}
+\begin{sc}
+\begin{tabular}{r ccccc r}
 \toprule
-\textbf{Layer} & \textbf{Depth} & $t=0.10$ & $t=0.25$ & $t=0.50$ & $t=0.75$ & $t=1.00^*$ & \textbf{NIMO $R^2$ ($t{=}0.10$)} \\
+\textbf{L} & $t{=}0.10$ & $t{=}0.25$ & $t{=}0.50$ & $t{=}0.75$ & $t{=}1.00^*$ & $R^2$ \\
 \midrule
-1  & 3.1\%  & 0.790 & 0.814 & 0.855 & 0.878 & 0.523 & 0.049 \\
-6  & 18.8\% & 0.624 & 0.659 & 0.719 & 0.775 & 0.969 & 0.070 \\
-11 & 34.4\% & 0.527 & 0.559 & 0.623 & 0.680 & 0.996 & 0.155 \\
-16 & 50.0\% & 0.434 & 0.462 & 0.531 & 0.584 & 0.952 & 0.179 \\
-26 & 81.3\% & 0.199 & 0.224 & 0.259 & 0.303 & 0.081 & 0.304 \\
-30 & 93.8\% & 0.094 & 0.108 & 0.124 & 0.135 & 0.414 & 0.303 \\
+1  & 0.790 & 0.814 & 0.855 & 0.878 & 0.523 & 0.049 \\
+6  & 0.624 & 0.659 & 0.719 & 0.775 & 0.969 & 0.070 \\
+11 & 0.527 & 0.559 & 0.623 & 0.680 & 0.996 & 0.155 \\
+16 & 0.434 & 0.462 & 0.531 & 0.584 & 0.952 & 0.179 \\
+26 & 0.199 & 0.224 & 0.259 & 0.303 & 0.081 & 0.304 \\
+30 & 0.094 & 0.108 & 0.124 & 0.135 & 0.414 & 0.303 \\
 \bottomrule
-\multicolumn{8}{l}{$^*$Degenerate: only 50 mask-token features active; LR unreliable.}
 \end{tabular}
+\end{sc}
+\end{small}
+\vskip -0.05in
+{\small $^*$Degenerate: only 50 mask-token features active; LR unreliable.}
 \end{table}
 
 \begin{table}[h]
 \centering
 \caption{Full LR table for GPT-2 Small (AR baseline).}
 \label{tab:full_lr_ar}
-\begin{tabular}{rr ccccc}
+\vskip 0.1in
+\begin{small}
+\begin{sc}
+\begin{tabular}{r ccccc}
 \toprule
-\textbf{Layer} & \textbf{Depth} & $t=0.10$ & $t=0.25$ & $t=0.50$ & $t=0.75$ & $t=1.00$ \\
+\textbf{L} & $p{=}0.10$ & $p{=}0.25$ & $p{=}0.50$ & $p{=}0.75$ & $p{=}1.00$ \\
 \midrule
-0  & 0\%   & 0.975 & 0.975 & 0.973 & 0.971 & 0.970 \\
-2  & 17\%  & 0.610 & 0.591 & 0.588 & 0.598 & 0.561 \\
-4  & 33\%  & 0.564 & 0.523 & 0.522 & 0.532 & 0.538 \\
-6  & 50\%  & 0.538 & 0.484 & 0.468 & 0.480 & 0.499 \\
-8  & 67\%  & 0.505 & 0.439 & 0.363 & 0.377 & 0.389 \\
-10 & 83\%  & 0.457 & 0.371 & 0.301 & 0.303 & 0.302 \\
+0  & 0.975 & 0.975 & 0.973 & 0.971 & 0.970 \\
+2  & 0.610 & 0.591 & 0.588 & 0.598 & 0.561 \\
+4  & 0.564 & 0.523 & 0.522 & 0.532 & 0.538 \\
+6  & 0.538 & 0.484 & 0.468 & 0.480 & 0.499 \\
+8  & 0.505 & 0.439 & 0.363 & 0.377 & 0.389 \\
+10 & 0.457 & 0.371 & 0.301 & 0.303 & 0.302 \\
 \bottomrule
 \end{tabular}
+\end{sc}
+\end{small}
 \end{table}
 
 \end{document}
